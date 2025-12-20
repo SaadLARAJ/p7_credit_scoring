@@ -10,23 +10,8 @@ import shap
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
-THRESHOLD_PATH = Path("artifacts/models/threshold.json")
-
-
-class ClientFeatures(BaseModel):
-    client_id: int = Field(..., description="Identifiant client")
-    features: list[float] = Field(..., description="Vecteur de features déjà transformé")
-
-
-app = FastAPI(title="Credit Scoring API", version="1.0.0")
-
-
-import joblib
-from pathlib import Path
-
-# ... (imports)
-
 MODEL_PATH = Path("models/lgbm_model_final.pkl")
+THRESHOLD_PATH = Path("models/optimal_threshold.pkl")  # Fixed: Use pickle file in models/
 
 def load_model():
     try:
@@ -39,8 +24,11 @@ def load_model():
 
 
 def load_threshold(default: float = 0.5) -> float:
-    if THRESHOLD_PATH.exists():
-        return json.loads(THRESHOLD_PATH.read_text()).get("threshold", default)
+    try:
+        if THRESHOLD_PATH.exists():
+            return float(joblib.load(THRESHOLD_PATH))
+    except Exception:
+        pass  # Fallback to default if load fails
     return default
 
 
