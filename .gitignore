@@ -1,0 +1,43 @@
+﻿# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+
+# Data & Models (TROP GROS)
+*.csv
+*.zip
+*.parquet
+*.pkl
+*.h5
+*.joblib
+models/
+data/
+Src/Data/
+artifacts/
+
+# Deliverables (TROP GROS)
+deliverables/
+
+# MLflow
+mlruns/
+mlruns.db
+mlflow.db
+
+# Logs & System
+*.log
+logs/
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Environment
+.env

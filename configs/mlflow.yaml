@@ -1,0 +1,6 @@
+mlflow:
+  tracking_uri: "http://127.0.0.1:5000"
+  registry_uri: "http://127.0.0.1:5000"
+  experiment_name: "credit_scoring_prod"
+  model_name: "credit_scoring_model"
+  artifact_location: "artifacts/mlflow"

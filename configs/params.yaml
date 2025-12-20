@@ -1,0 +1,20 @@
+data:
+  reference_table: "data/joined_clients.csv"
+  train_ratio: 0.7
+
+modeling:
+  algorithm: "GradientBoostingClassifier"
+  search_space:
+    n_estimators: [100, 200]
+    learning_rate: [0.05, 0.1]
+    max_depth: [3, 4]
+  imbalance_strategy: "class_weight-balanced"
+
+scoring:
+  fn_cost: 10.0
+  fp_cost: 1.0
+  threshold_grid: [0.05, 0.95, 0.02]
+
+monitoring:
+  drift_threshold: 0.3
+  alert_channel: "slack"
