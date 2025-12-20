@@ -21,9 +21,19 @@ class ClientFeatures(BaseModel):
 app = FastAPI(title="Credit Scoring API", version="1.0.0")
 
 
+import joblib
+from pathlib import Path
+
+# ... (imports)
+
+MODEL_PATH = Path("models/lgbm_model_final.pkl")
+
 def load_model():
     try:
-        return mlflow.pyfunc.load_model("models:/credit_scoring_model/Production")
+        if not MODEL_PATH.exists():
+            raise FileNotFoundError(f"Model file not found at {MODEL_PATH}")
+        # Load directly from file since MLflow server is not available on Render
+        return joblib.load(MODEL_PATH)
     except Exception as exc:  # noqa: BLE001
         raise HTTPException(status_code=503, detail=f"Model loading failed: {exc}") from exc
 
