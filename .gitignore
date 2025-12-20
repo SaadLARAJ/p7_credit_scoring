@@ -8,14 +8,15 @@ env/
 venv/
 .venv/
 
-# Data & Models (TROP GROS)
+# Data & Models - AUTORISÉS (Petits fichiers)
 *.csv
 *.zip
 *.parquet
-*.pkl
-*.h5
-*.joblib
-models/
+!models/
+!models/*.pkl
+# *.h5
+# *.joblib
+joblib
 data/
 Src/Data/
 artifacts/
