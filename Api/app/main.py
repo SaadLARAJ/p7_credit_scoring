@@ -20,6 +20,10 @@ class ClientFeatures(BaseModel):
     client_id: int = Field(..., description="Identifiant client")
     features: list[float] = Field(..., description="Vecteur de features déjà transformé")
 
+
+def load_model():
+    try:
+        if not MODEL_PATH.exists():
             raise FileNotFoundError(f"Model file not found at {MODEL_PATH}")
         # Load directly from file since MLflow server is not available on Render
         return joblib.load(MODEL_PATH)
