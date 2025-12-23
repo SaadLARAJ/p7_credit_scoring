@@ -115,12 +115,18 @@ if selected_client_id:
             # Waterfall plot
             try:
                 fig, ax = plt.subplots(figsize=(10, 6))
-                # Create Prediction object for waterfall
+                # Get feature names from model if available
+                if hasattr(model, 'feature_name_'):
+                    feature_names = model.feature_name_
+                else:
+                    feature_names = [f"Feature {i}" for i in range(features.shape[1])]
+                
+                # Create Explanation object for waterfall
                 exp_obj = shap.Explanation(
                     values=vals[0],
                     base_values=explainer.expected_value[1] if isinstance(explainer.expected_value, list) else explainer.expected_value,
                     data=features[0],
-                    feature_names=[f"Feature {i}" for i in range(features.shape[1])] # Names unavailable in array, using indices
+                    feature_names=feature_names
                 )
                 shap.plots.waterfall(exp_obj, show=False)
                 st.pyplot(fig)
@@ -131,11 +137,22 @@ if selected_client_id:
 # --- Monitoring Section ---
 st.divider()
 st.markdown("### 📊 Monitoring Data Drift")
+st.markdown("Uploadez le rapport Evidently HTML généré par `Src/drift_analysis.py` pour visualiser la dérive des données.")
+
 uploaded_report = st.file_uploader("Déposer rapport Evidently HTML", type=["html"])
 if uploaded_report:
+    # Display the HTML report inline
+    html_content = uploaded_report.read().decode("utf-8")
+    st.components.v1.html(html_content, height=800, scrolling=True)
+    
+    # Also offer download
     st.download_button(
         label="📥 Télécharger le rapport complet",
-        data=uploaded_report,
+        data=html_content,
         file_name="drift_report.html",
         mime="text/html"
     )
+
+# --- Footer ---
+st.divider()
+st.caption("💡 **Note MLflow** : Pour voir l'historique des expériences et métriques, lancez `mlflow ui` en local sur le projet.")
