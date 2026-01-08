@@ -3,12 +3,13 @@ data:
   train_ratio: 0.7
 
 modeling:
-  algorithm: "GradientBoostingClassifier"
+  algorithm: "LGBMClassifier"
   search_space:
     n_estimators: [100, 200]
     learning_rate: [0.05, 0.1]
-    max_depth: [3, 4]
-  imbalance_strategy: "class_weight-balanced"
+    max_depth: [3, 5]
+    num_leaves: [31, 63]
+  imbalance_strategy: "sample_weight-balanced"
 
 scoring:
   fn_cost: 10.0

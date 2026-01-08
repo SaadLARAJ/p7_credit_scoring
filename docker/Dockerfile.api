@@ -3,7 +3,6 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 COPY Api/app ./Api/app
-COPY artifacts/models ./artifacts/models
-ENV MLFLOW_TRACKING_URI=http://mlflow:5000
+COPY models ./models
 EXPOSE 8000
 CMD ["uvicorn", "Api.app.main:app", "--host", "0.0.0.0", "--port", "8000"]

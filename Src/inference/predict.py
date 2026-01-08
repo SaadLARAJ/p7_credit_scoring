@@ -1,30 +1,39 @@
+"""
+Inference module for loading the trained model and making predictions.
+"""
 from __future__ import annotations
 
-import json
+import joblib
 from pathlib import Path
 from typing import Any, Dict
 
-import mlflow
 import numpy as np
 
-THRESHOLD_PATH = Path(__file__).resolve().parents[2] / "artifacts" / "models" / "threshold.json"
+# Paths configuration
+ROOT_DIR = Path(__file__).resolve().parents[2]
+MODEL_PATH = ROOT_DIR / "models" / "lgbm_model_final.pkl"
+THRESHOLD_PATH = ROOT_DIR / "models" / "optimal_threshold.pkl"
 
 
-def load_model(stage: str = "Production"):
-    model_uri = f"models:/credit_scoring_model/{stage}"
-    return mlflow.pyfunc.load_model(model_uri)
+def load_model():
+    """Load the trained LightGBM model from disk."""
+    if not MODEL_PATH.exists():
+        raise FileNotFoundError(f"Model not found at {MODEL_PATH}. Run training first.")
+    return joblib.load(MODEL_PATH)
 
 
 def load_threshold(default: float = 0.5) -> float:
+    """Load the optimal business threshold."""
     if THRESHOLD_PATH.exists():
-        return json.loads(THRESHOLD_PATH.read_text()).get("threshold", default)
+        return float(joblib.load(THRESHOLD_PATH))
     return default
 
 
-def predict_proba(features: np.ndarray, stage: str = "Production") -> Dict[str, Any]:
-    model = load_model(stage=stage)
+def predict_proba(features: np.ndarray) -> Dict[str, Any]:
+    """Make a prediction with probability and business decision."""
+    model = load_model()
     threshold = load_threshold()
-    proba = model.predict(features)
+    proba = model.predict_proba(features)[:, 1]
     decision = (proba >= threshold).astype(int)
     return {
         "probability": float(proba[0]),
