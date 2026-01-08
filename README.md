@@ -87,5 +87,5 @@ docker build -f docker/Dockerfile.streamlit -t credit-scoring-app .
 
 ## Liens
 
-- **Streamlit Cloud** : [lien à ajouter après déploiement]
+- **Streamlit Cloud** : https://appapppy-gulzxbe65xun4h6p5a4dlr.streamlit.app/
 
