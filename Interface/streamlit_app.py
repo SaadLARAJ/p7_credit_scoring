@@ -76,8 +76,8 @@ if selected_client_id:
     # Prediction
     if st.sidebar.button("Lancer l'analyse", type="primary"):
         with st.spinner("Analyse du dossier en cours..."):
-            # 1. Probability
-            proba = float(model.predict(features)[0])
+            # 1. Probability (use predict_proba for probability, not predict which returns class)
+            proba = float(model.predict_proba(features)[0, 1])
             decision = proba >= threshold
             
             # 2. Display Result
