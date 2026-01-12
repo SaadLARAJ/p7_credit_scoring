@@ -7,6 +7,7 @@ from typing import Any
 import joblib
 import matplotlib.pyplot as plt
 import numpy as np
+import requests
 import shap
 import streamlit as st
 
@@ -19,35 +20,25 @@ st.set_page_config(
 
 # Paths
 ROOT_DIR = Path(__file__).resolve().parents[1]
-MODEL_PATH = ROOT_DIR / "models" / "lgbm_model_final.pkl"
-THRESHOLD_PATH = ROOT_DIR / "models" / "optimal_threshold.pkl"
 DATA_PATH = ROOT_DIR / "Interface" / "clients_sample.pkl"
+
+# API Configuration
+# Default to deployed API, but allow local override
+API_URL = "https://credit-scoring-api-73lq.onrender.com" 
+# Uncomment for local testing:
+# API_URL = "http://localhost:8000"
 
 # --- Backend Logic (Cached) ---
 
 @st.cache_resource
-def load_resources():
-    """Load model, threshold and data sample once."""
-    if not MODEL_PATH.exists():
-        st.error("Model not found! Please ensure 'models/lgbm_model_final.pkl' is in the repo.")
-        st.stop()
-    
-    model = joblib.load(MODEL_PATH)
-    
-    threshold = 0.5
-    if THRESHOLD_PATH.exists():
-        try:
-            threshold = float(joblib.load(THRESHOLD_PATH))
-        except:
-            pass
-            
-    data_dict = {}
-    if DATA_PATH.exists():
-        data_dict = joblib.load(DATA_PATH)
-        
-    return model, threshold, data_dict
+def load_data():
+    """Load data sample once."""
+    if not DATA_PATH.exists():
+        st.error(f"Data file not found at {DATA_PATH}")
+        return {}
+    return joblib.load(DATA_PATH)
 
-model, threshold, data_dict = load_resources()
+data_dict = load_data()
 
 # --- UI Layout ---
 
@@ -75,64 +66,72 @@ if selected_client_id:
     
     # Prediction
     if st.sidebar.button("Lancer l'analyse", type="primary"):
-        with st.spinner("Analyse du dossier en cours..."):
-            # 1. Probability (use predict_proba for probability, not predict which returns class)
-            proba = float(model.predict_proba(features)[0, 1])
-            decision = proba >= threshold
+        with st.spinner("Analyse du dossier en cours auprès de l'API..."):
             
-            # 2. Display Result
-            col1, col2 = st.columns(2)
-            with col1:
-                st.metric("Score de Risque", f"{proba:.2%}")
-            with col2:
-                if decision:
-                    st.error("❌ CRÉDIT REFUSÉ")
-                    st.markdown("Risque trop élevé par rapport au seuil.")
-                else:
-                    st.success("✅ CRÉDIT ACCORDÉ")
-                    st.markdown("Dossier solide.")
-            
-            # Gauge Bar
-            st.progress(min(proba, 1.0))
-            
-            # 3. SHAP Explanation
-            st.divider()
-            st.subheader("🔍 Explicabilité (SHAP)")
-            st.info("Quelles variables ont le plus impacté cette décision ?")
-            
-            # Create explainer (TreeExplainer is optimized for LGBM)
-            # We use a dummy background if needed, but TreeExplainer handles it well often
-            explainer = shap.TreeExplainer(model)
-            shap_values = explainer.shap_values(features)
-            
-            # Handling binary classification shape issues in SHAP
-            if isinstance(shap_values, list):
-                # LightGBM binary often returns list [class0, class1] or just class1
-                vals = shap_values[1] if len(shap_values) > 1 else shap_values[0]
-            else:
-                vals = shap_values
-
-            # Waterfall plot
+            # 1. Call API for Prediction
             try:
-                fig, ax = plt.subplots(figsize=(10, 6))
-                # Get feature names from model if available
-                if hasattr(model, 'feature_name_'):
-                    feature_names = model.feature_name_
-                else:
-                    feature_names = [f"Feature {i}" for i in range(features.shape[1])]
+                payload = {
+                    "client_id": selected_client_id,
+                    "features": features.tolist()[0]
+                }
+                response = requests.post(f"{API_URL}/predict", json=payload)
+                response.raise_for_status()
+                result = response.json()
                 
-                # Create Explanation object for waterfall
+                proba = result["probability"]
+                decision = result["decision"]
+                threshold = result["threshold"]
+                
+                # 2. Display Result
+                st.markdown(f"**Seuil d'acceptation API :** `{threshold:.3f}`")
+                
+                col1, col2 = st.columns(2)
+                with col1:
+                    st.metric("Score de Risque", f"{proba:.2%}")
+                with col2:
+                    if decision == 1: # 1 means Default/Refused
+                        st.error("❌ CRÉDIT REFUSÉ")
+                        st.markdown("Risque trop élevé par rapport au seuil.")
+                    else:
+                        st.success("✅ CRÉDIT ACCORDÉ")
+                        st.markdown("Dossier solide.")
+                
+                # Gauge Bar
+                st.progress(min(proba, 1.0))
+                
+                # 3. SHAP Explanation via API
+                st.divider()
+                st.subheader("🔍 Explicabilité (SHAP)")
+                
+                explain_response = requests.post(f"{API_URL}/explain", json=payload)
+                explain_response.raise_for_status()
+                explain_data = explain_response.json()
+                
+                # Reconstruct SHAP Explanation object
+                # The API returns shap_values, base_value, feature_names, data
+                shap_values = np.array(explain_data["shap_values"])
+                base_value = explain_data["base_value"]
+                feature_names = explain_data["feature_names"]
+                data_val = np.array(explain_data["data"])
+                
+                # Create Explanation object
+                # Note: valid for single instance (Waterfall)
                 exp_obj = shap.Explanation(
-                    values=vals[0],
-                    base_values=explainer.expected_value[1] if isinstance(explainer.expected_value, list) else explainer.expected_value,
-                    data=features[0],
+                    values=shap_values,
+                    base_values=base_value,
+                    data=data_val[0], # data was list of list, take first row
                     feature_names=feature_names
                 )
+                
+                fig, ax = plt.subplots(figsize=(10, 6))
                 shap.plots.waterfall(exp_obj, show=False)
                 st.pyplot(fig)
+                
+            except requests.exceptions.ConnectionError:
+                st.error(f"Impossible de contacter l'API à l'adresse : {API_URL}")
+                st.info("Vérifiez que l'API est bien lancée (en local ou sur le cloud).")
             except Exception as e:
-                st.warning(f"Impossible d'afficher le graphique détaillé : {e}")
-                st.bar_chart(vals[0])
+                st.error(f"Une erreur est survenue : {e}")
 
 # --- Monitoring Section ---
 st.divider()
