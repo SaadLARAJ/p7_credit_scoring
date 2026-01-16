@@ -9,6 +9,7 @@ import mlflow
 import numpy as np
 import shap
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 MODEL_PATH = Path("models/lgbm_model_final.pkl")
@@ -16,6 +17,15 @@ THRESHOLD_PATH = Path("models/optimal_threshold.pkl")  # Fixed: Use pickle file 
 
 # Define app FIRST before usage
 app = FastAPI(title="Credit Scoring API", version="1.0.0")
+
+# Add CORS Middleware to allow requests from Streamlit
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allows all origins
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all methods
+    allow_headers=["*"],  # Allows all headers
+)
 
 class ClientFeatures(BaseModel):
     client_id: int = Field(..., description="Identifiant client")
