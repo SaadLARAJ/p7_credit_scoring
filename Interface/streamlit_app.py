@@ -43,7 +43,7 @@ data_dict = load_data()
 # --- UI Layout ---
 
 st.title("🏦 Studio Prêt à Dépenser")
-st.markdown(f"**Seuil d'acceptation métier :** `{threshold:.3f}`")
+st.markdown("Interface connectée à l'API de Scoring.")
 
 # Sidebar: Client Selection
 st.sidebar.header("Dossier Client")
