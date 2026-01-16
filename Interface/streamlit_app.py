@@ -74,7 +74,13 @@ if selected_client_id:
                     "client_id": selected_client_id,
                     "features": features.tolist()[0]
                 }
-                response = requests.post(f"{API_URL}/predict", json=payload)
+                # Add headers to mimic a browser and avoid WAF/403 blocks
+                headers = {
+                    "Content-Type": "application/json",
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+                }
+                
+                response = requests.post(f"{API_URL}/predict", json=payload, headers=headers)
                 response.raise_for_status()
                 result = response.json()
                 
@@ -103,7 +109,7 @@ if selected_client_id:
                 st.divider()
                 st.subheader("🔍 Explicabilité (SHAP)")
                 
-                explain_response = requests.post(f"{API_URL}/explain", json=payload)
+                explain_response = requests.post(f"{API_URL}/explain", json=payload, headers=headers)
                 explain_response.raise_for_status()
                 explain_data = explain_response.json()
                 
