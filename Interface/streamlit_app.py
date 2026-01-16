@@ -24,7 +24,7 @@ DATA_PATH = ROOT_DIR / "Interface" / "clients_sample.pkl"
 
 # API Configuration
 # Default to deployed API, but allow local override
-API_URL = "https://credit-scoring-api-73lq.onrender.com" 
+API_URL = "https://p7-credit-scoring-1.onrender.com" 
 # Uncomment for local testing:
 # API_URL = "http://localhost:8000"
 
