@@ -152,7 +152,7 @@ if selected_client_id:
                 exp_obj = shap.Explanation(
                     values=shap_values,
                     base_values=base_value,
-                    data=data_val[0], # data was list of list, take first row
+                    data=data_val, # data is 1D array of features
                     feature_names=feature_names
                 )
                 
