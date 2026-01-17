@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: p7-credit-scoring-api
+    runtime: docker
+    dockerContext: .
+    dockerfilePath: docker/Dockerfile.api
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0

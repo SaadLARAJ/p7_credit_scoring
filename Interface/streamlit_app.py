@@ -21,12 +21,16 @@ st.set_page_config(
 # Paths
 ROOT_DIR = Path(__file__).resolve().parents[1]
 DATA_PATH = ROOT_DIR / "Interface" / "clients_sample.pkl"
+MODEL_PATH = ROOT_DIR / "models" / "lgbm_model_final.pkl"
+THRESHOLD_PATH = ROOT_DIR / "models" / "optimal_threshold.pkl"
 
 # API Configuration
-# Default to deployed API, but allow local override
-API_URL = "https://p7-credit-scoring-1.onrender.com" 
-# Uncomment for local testing:
-# API_URL = "http://localhost:8000"
+try:
+    API_URL = st.secrets["API_URL"]
+except FileNotFoundError:
+    API_URL = None
+except KeyError:
+    API_URL = None
 
 # --- Backend Logic (Cached) ---
 
@@ -38,12 +42,35 @@ def load_data():
         return {}
     return joblib.load(DATA_PATH)
 
+@st.cache_resource
+def load_local_model():
+    """Load model and threshold locally for standalone mode."""
+    if not MODEL_PATH.exists():
+        return None, 0.5
+    model = joblib.load(MODEL_PATH)
+    threshold = 0.5
+    if THRESHOLD_PATH.exists():
+        try:
+            threshold = float(joblib.load(THRESHOLD_PATH))
+        except:
+            pass
+    return model, threshold
+
 data_dict = load_data()
+local_model, local_threshold = load_local_model()
+
+# Determine mode
+USE_API = API_URL is not None and API_URL != ""
+MODE = "API" if USE_API else "Local"
 
 # --- UI Layout ---
 
 st.title("🏦 Studio Prêt à Dépenser")
-st.markdown("Interface connectée à l'API de Scoring.")
+st.markdown(f"**Seuil d'acceptation métier :** `{local_threshold:.3f}`")
+if USE_API:
+    st.caption(f"🌐 Mode API : {API_URL}")
+else:
+    st.caption("💻 Mode Local (modèle chargé en mémoire)")
 
 # Sidebar: Client Selection
 st.sidebar.header("Dossier Client")
