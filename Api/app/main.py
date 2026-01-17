@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Any
 
 import joblib
-import mlflow
+
 import numpy as np
 import shap
 from fastapi import FastAPI, HTTPException
