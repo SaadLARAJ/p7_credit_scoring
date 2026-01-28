@@ -1,0 +1,14 @@
+[theme]
+# Couleurs accessibles WCAG avec contraste minimum 4.5:1
+primaryColor = "#1976D2"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F5F5F5"
+textColor = "#212121"
+font = "sans serif"
+
+[server]
+headless = true
+enableCORS = false
+
+[browser]
+gatherUsageStats = false
