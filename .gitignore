@@ -20,6 +20,9 @@ joblib
 data/
 Src/Data/
 artifacts/
+# Allow P8_Dashboard data for Streamlit Cloud
+!P8_Dashboard/data/
+!P8_Dashboard/data/*.csv
 
 # Deliverables (TROP GROS)
 deliverables/

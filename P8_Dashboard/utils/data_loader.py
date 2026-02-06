@@ -18,6 +18,7 @@ import streamlit as st
 DASHBOARD_DIR = Path(__file__).resolve().parents[1]
 PROJECT_ROOT = DASHBOARD_DIR.parent
 DATA_DIR = PROJECT_ROOT / "data"
+DASHBOARD_DATA_DIR = DASHBOARD_DIR / "data"  # For Streamlit Cloud deployment
 MODELS_DIR = PROJECT_ROOT / "models"
 ARTIFACTS_DIR = PROJECT_ROOT / "artifacts"
 INTERFACE_DIR = PROJECT_ROOT / "Interface"
@@ -76,7 +77,13 @@ def load_clients_data() -> pd.DataFrame:
     Returns:
         DataFrame with all client data including descriptive features
     """
-    # Try joined_clients.csv first (has descriptive features)
+    # Try P8_Dashboard/data first (for Streamlit Cloud deployment)
+    dashboard_path = DASHBOARD_DATA_DIR / "joined_clients.csv"
+    if dashboard_path.exists():
+        df = pd.read_csv(dashboard_path)
+        return df
+    
+    # Try project root data folder (local development)
     joined_path = DATA_DIR / "joined_clients.csv"
     if joined_path.exists():
         df = pd.read_csv(joined_path)
@@ -90,7 +97,7 @@ def load_clients_data() -> pd.DataFrame:
         return pd.DataFrame.from_dict(data_dict, orient="index")
     
     raise FileNotFoundError(
-        "No client data found. Expected: data/joined_clients.csv or Interface/clients_sample.pkl"
+        "No client data found. Expected: P8_Dashboard/data/joined_clients.csv or data/joined_clients.csv"
     )
 
 
