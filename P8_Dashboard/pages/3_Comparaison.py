@@ -95,29 +95,34 @@ if analyze_clicked:
     # Load data
     df = load_clients_data()
     
-    # Get client info
-    client_info = get_client_info(selected_client)
-    
-    if not client_info:
-        st.error(f"Client {selected_client} non trouvé.")
-        st.stop()
-    
-    # Get client value for selected feature
+    # Get client value directly from dataframe (more reliable)
     feature_label = get_feature_label(selected_feature)
-    client_value = client_info.get(feature_label)
+    client_value = None
     
-    if client_value is None:
-        # Try raw feature name
-        if "client_id" in df.columns:
-            client_row = df[df["client_id"] == selected_client]
-        else:
+    # Search for client in dataframe
+    if "client_id" in df.columns:
+        client_row = df[df["client_id"] == selected_client]
+    else:
+        try:
             client_row = df.loc[[selected_client]]
-        
-        if not client_row.empty and selected_feature in client_row.columns:
-            client_value = client_row[selected_feature].values[0]
+        except KeyError:
+            client_row = pd.DataFrame()
     
-    if client_value is None or pd.isna(client_value):
-        st.warning(f"Valeur non disponible pour {feature_label} pour ce client.")
+    if not client_row.empty and selected_feature in client_row.columns:
+        val = client_row[selected_feature].values[0]
+        if not pd.isna(val):
+            client_value = val
+    
+    # Fallback: try get_client_info
+    if client_value is None:
+        client_info = get_client_info(selected_client)
+        if client_info:
+            client_value = client_info.get(feature_label)
+    
+    if client_value is None or (isinstance(client_value, float) and pd.isna(client_value)):
+        st.warning(f"Valeur non disponible pour {feature_label} pour ce client. "
+                   f"(Client ID: {selected_client}, Feature: {selected_feature})")
+        st.info("Ce client n'a peut-être pas de données descriptives dans le fichier joined_clients.csv")
         st.stop()
     
     # Get population data
